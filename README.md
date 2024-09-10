@@ -81,7 +81,7 @@ Dieses Script ist einfach zu implementieren und sollte die gewünschte Funktiona
 ## Beispiel CO2 Emission von Strom
 *Ich möchte ein Javascript erstellen, welches mit eine HTML Tabelle mit der CO2 Emission von Strom für die kommenden Stunden ausgibt. Datenquelle ist der GrünstromIndex unter https://api.corrently.io/v2.0/gsi/prediction?zip=69256, wobei 69256 die Postleitzahl meines Ortes ist. Im Ergebnis des API Aufrufs gibt es einen Array von Objekten mit dem Namen "forecast",der Zeitstempel der Stunde im Objekt als "timeStamp" die CO2 Emission je Kilo-WattStunde (kWh) ist im Feld "co2_g_standard". Die Tabelle soll die Spalten "Uhrzeit" und "g/kWh co2" haben.*
 
-https://energychain.github.io/co2_emission_strom/co2.html
+https://energychain.github.io/gsi_verbrauchempfehlung/co2.html
 
 #### AI Antwort
 Gerne erstelle ich für Sie ein JavaScript, das eine HTML-Tabelle mit den CO2-Emissionswerten für Strom in den kommenden Stunden generiert. Hier ist der Code, der Ihre Anforderungen erfüllt:
