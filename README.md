@@ -84,57 +84,99 @@ Dieses Script ist einfach zu implementieren und sollte die gewünschte Funktiona
 https://energychain.github.io/gsi_verbrauchempfehlung/co2.html
 
 #### AI Antwort
-Gerne erstelle ich für Sie ein JavaScript, das eine HTML-Tabelle mit den CO2-Emissionswerten für Strom in den kommenden Stunden generiert. Hier ist der Code, der Ihre Anforderungen erfüllt:
+Gerne erstelle ich Ihnen eine Javascript-Anwendung namens "Stromwetter", die den GrünstromIndex verwendet und die Daten mit Chart.js visualisiert. Ich werde ein HTML-Dokument erstellen, das JavaScript und Chart.js enthält, um die gewünschte Funktionalität zu implementieren.
 
-```Javascript
-// Funktion zum Formatieren des Zeitstempels mit Datum
-function formatDateTime(timestamp) {
-    const date = new Date(timestamp);
-    return date.toLocaleString('de-DE', { 
+```Javascript  async function getLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation wird von Ihrem Browser nicht unterstützt');
+                } else {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                }
+            });
+        }
+
+        async function fetchData(lat, lon) {
+            const response = await fetch(`https://api.corrently.io/v2.0/gsi/prediction?lat=${lat}&lon=${lon}`);
+            return await response.json();
+        }
+
+        function prepareChartData(data) {            
+            const sortedData = data.slice().sort((a, b) => a.co2_g_standard - b.co2_g_standard);
+            const lowThreshold = Math.floor(sortedData.length / 3);
+            const highThreshold = Math.floor(sortedData.length * 2 / 3);
+
+            const lowEmissions = new Set(sortedData.slice(0, lowThreshold).map(d => d.co2_g_standard));
+            const highEmissions = new Set(sortedData.slice(highThreshold).map(d => d.co2_g_standard));
+
+            return data.map(hour => ({
+                x: new Date(hour.timeStamp).toLocaleTimeString([], { 
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit', 
         minute: '2-digit'
-    });
-}
+    }),
+                y: hour.co2_g_standard,
+                color: lowEmissions.has(hour.co2_g_standard) ? '#147a50' :
+                       highEmissions.has(hour.co2_g_standard) ? '#909090' : '#e6b41e'
+            }));
+        }
 
-// Funktion zum Erstellen der Tabelle
-function createTable(data) {
-    const table = document.createElement('table');
-    table.innerHTML = `
-        <thead>
-            <tr>
-                <th>Datum und Uhrzeit</th>
-                <th>g/kWh CO2</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${data.map(item => `
-                <tr>
-                    <td>${formatDateTime(item.timeStamp)}</td>
-                    <td>${item.co2_g_standard.toFixed(2)}</td>
-                </tr>
-            `).join('')}
-        </tbody>
-    `;
-    return table;
-}
+        function createChart(chartData) {
+            const ctx = document.getElementById('stromwetterChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartData.map(d => d.color)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Uhrzeit'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'CO2 Emission (g/kWh)'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'CO2 Emission pro Stunde'
+                        }
+                    }
+                }
+            });
+        }
 
-// Funktion zum Abrufen der Daten und Erstellen der Tabelle
-async function fetchDataAndCreateTable() {
-    try {
-        const response = await fetch('https://api.corrently.io/v2.0/gsi/prediction?zip=69256');
-        const data = await response.json();
-        const table = createTable(data.forecast);
-        document.body.appendChild(table);
-    } catch (error) {
-        console.error('Fehler beim Abrufen der Daten:', error);
-    }
-}
+        async function init() {
+            try {
+                const position = await getLocation();
+                const data = await fetchData(position.coords.latitude, position.coords.longitude);
+                const chartData = prepareChartData(data.forecast);
+                console.log(chartData);
+                createChart(chartData);
+            } catch (error) {
+                console.error('Fehler:', error);
+                alert('Es gab einen Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.');
+            }
+        }
 
-// Führen Sie die Funktion aus, wenn das DOM geladen ist
-document.addEventListener('DOMContentLoaded', fetchDataAndCreateTable);
+        init();
 ```
 
 Dieses JavaScript führt folgende Aktionen aus:
@@ -145,3 +187,119 @@ Dieses JavaScript führt folgende Aktionen aus:
 - Ein Event-Listener wartet auf das Laden des DOM und ruft dann die Hauptfunktion auf.
 
 Um dieses Skript zu verwenden, fügen Sie es in Ihre HTML-Datei ein oder binden Sie es als externe Datei ein. Die Tabelle wird automatisch erstellt und in den Body der Seite eingefügt, sobald die Seite geladen ist.
+
+
+
+## Beispiel Stromwetter
+*Erstelle mir eine Javascript Anwendung, welche sich Stromwetter nennt. Diese nutzt als Datenquelle den GrünstromIndex: https://api.corrently.io/v2.0/gsi/prediction?lat=50.2942599&lon=8.698707.  "lat" und "lon" sollen durch Geokoordinaten des Nutzers ersetzt werden. Das Ergebnis enthält einen Array mit Objekten für jede Stunde. Im Objekt gibt es das Feld "timeStamp" mit der Stunde der Vorhersage und das Feld "co2_g_standard" mit der CO2 Emission je Kilo-Watt-Stunde. Visualisiere dies mit Chart JS als Balkendiagram, die Höhe der Balken ist die CO2 Emission. Die Balken haben die Farbe "#909090" für die 1/3 Stunden, mit der höchsten CO2 Emission, die Farbe "#147a50" für 1/3 der Stunden mit der niedrigsten Emission. Alle anderen Balken bekommen die Farbe "#e6b41e".*
+
+https://energychain.github.io/gsi_verbrauchempfehlung/stromwetter.html
+
+#### AI Antwort
+Gerne erstelle ich Ihnen eine Javascript-Anwendung namens "Stromwetter", die den GrünstromIndex verwendet und die Daten mit Chart.js visualisiert. Ich werde ein HTML-Dokument erstellen, das JavaScript und Chart.js enthält, um die gewünschte Funktionalität zu implementieren.
+
+```Javascript
+  async function getLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation wird von Ihrem Browser nicht unterstützt');
+                } else {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                }
+            });
+        }
+
+        async function fetchData(lat, lon) {
+            const response = await fetch(`https://api.corrently.io/v2.0/gsi/prediction?lat=${lat}&lon=${lon}`);
+            return await response.json();
+        }
+
+        function prepareChartData(data) {            
+            const sortedData = data.slice().sort((a, b) => a.co2_g_standard - b.co2_g_standard);
+            const lowThreshold = Math.floor(sortedData.length / 3);
+            const highThreshold = Math.floor(sortedData.length * 2 / 3);
+
+            const lowEmissions = new Set(sortedData.slice(0, lowThreshold).map(d => d.co2_g_standard));
+            const highEmissions = new Set(sortedData.slice(highThreshold).map(d => d.co2_g_standard));
+
+            return data.map(hour => ({
+                x: new Date(hour.timeStamp).toLocaleTimeString([], { 
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit', 
+        minute: '2-digit'
+    }),
+                y: hour.co2_g_standard,
+                color: lowEmissions.has(hour.co2_g_standard) ? '#147a50' :
+                       highEmissions.has(hour.co2_g_standard) ? '#909090' : '#e6b41e'
+            }));
+        }
+
+        function createChart(chartData) {
+            const ctx = document.getElementById('stromwetterChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartData.map(d => d.color)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Uhrzeit'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'CO2 Emission (g/kWh)'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'CO2 Emission pro Stunde'
+                        }
+                    }
+                }
+            });
+        }
+
+        async function init() {
+            try {
+                const position = await getLocation();
+                const data = await fetchData(position.coords.latitude, position.coords.longitude);
+                const chartData = prepareChartData(data.forecast);
+                console.log(chartData);
+                createChart(chartData);
+            } catch (error) {
+                console.error('Fehler:', error);
+                alert('Es gab einen Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.');
+            }
+        }
+
+        init();
+```
+
+Gerne erstelle ich Ihnen eine Javascript-Anwendung namens "Stromwetter", die den GrünstromIndex verwendet und die Daten mit Chart.js visualisiert. Ich werde ein HTML-Dokument erstellen, das JavaScript und Chart.js enthält, um die gewünschte Funktionalität zu implementieren.
+Stromwetter AnwendungClick to open website
+Ich habe eine HTML-Anwendung erstellt, die Ihre Anforderungen erfüllt. Hier ist eine Erklärung der wichtigsten Komponenten:
+
+- Die Anwendung verwendet die Geolocation API, um die Position des Nutzers zu ermitteln.
+- Mit den Koordinaten wird die GrünstromIndex API abgefragt.
+- Die erhaltenen Daten werden verarbeitet und für Chart.js vorbereitet.
+- Ein Balkendiagramm wird mit Chart.js erstellt, das die CO2-Emissionen für jede Stunde anzeigt.
+- Die Balkenfarben werden entsprechend Ihrer Vorgaben gesetzt: grün für das niedrigste Drittel, grau für das höchste Drittel und gelb für den Rest.
+
+Um die Anwendung zu verwenden, speichern Sie den Code in einer HTML-Datei und öffnen Sie diese in einem Webbrowser. Stellen Sie sicher, dass Sie eine Internetverbindung haben und dem Browser erlauben, auf Ihren Standort zuzugreifen.

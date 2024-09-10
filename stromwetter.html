@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stromwetter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+</head>
+<body>
+    <h1>Stromwetter</h1>
+    <canvas id="stromwetterChart"></canvas>
+
+    <script>
+        async function getLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation wird von Ihrem Browser nicht unterstützt');
+                } else {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                }
+            });
+        }
+
+        async function fetchData(lat, lon) {
+            const response = await fetch(`https://api.corrently.io/v2.0/gsi/prediction?lat=${lat}&lon=${lon}`);
+            return await response.json();
+        }
+
+        function prepareChartData(data) {            
+            const sortedData = data.slice().sort((a, b) => a.co2_g_standard - b.co2_g_standard);
+            const lowThreshold = Math.floor(sortedData.length / 3);
+            const highThreshold = Math.floor(sortedData.length * 2 / 3);
+
+            const lowEmissions = new Set(sortedData.slice(0, lowThreshold).map(d => d.co2_g_standard));
+            const highEmissions = new Set(sortedData.slice(highThreshold).map(d => d.co2_g_standard));
+
+            return data.map(hour => ({
+                x: new Date(hour.timeStamp).toLocaleTimeString([], { 
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit', 
+        minute: '2-digit'
+    }),
+                y: hour.co2_g_standard,
+                color: lowEmissions.has(hour.co2_g_standard) ? '#147a50' :
+                       highEmissions.has(hour.co2_g_standard) ? '#909090' : '#e6b41e'
+            }));
+        }
+
+        function createChart(chartData) {
+            const ctx = document.getElementById('stromwetterChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartData.map(d => d.color)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Uhrzeit'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'CO2 Emission (g/kWh)'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'CO2 Emission pro Stunde'
+                        }
+                    }
+                }
+            });
+        }
+
+        async function init() {
+            try {
+                const position = await getLocation();
+                const data = await fetchData(position.coords.latitude, position.coords.longitude);
+                const chartData = prepareChartData(data.forecast);
+                console.log(chartData);
+                createChart(chartData);
+            } catch (error) {
+                console.error('Fehler:', error);
+                alert('Es gab einen Fehler beim Laden der Daten. Bitte versuchen Sie es später erneut.');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
