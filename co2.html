@@ -1,0 +1,58 @@
+<html>
+<head>
+    <title>CO2 Emission von lokalem Strom</title>
+</head>
+<body>
+  
+</body>
+<script>
+ // Funktion zum Formatieren des Zeitstempels mit Datum
+function formatDateTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleString('de-DE', { 
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
+}
+
+// Funktion zum Erstellen der Tabelle
+function createTable(data) {
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Datum und Uhrzeit</th>
+                <th>g/kWh CO2</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${data.map(item => `
+                <tr>
+                    <td>${formatDateTime(item.timeStamp)}</td>
+                    <td>${item.co2_g_standard.toFixed(2)}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    return table;
+}
+
+// Funktion zum Abrufen der Daten und Erstellen der Tabelle
+async function fetchDataAndCreateTable() {
+    try {
+        const response = await fetch('https://api.corrently.io/v2.0/gsi/prediction?zip=69256');
+        const data = await response.json();
+        const table = createTable(data.forecast);
+        document.body.appendChild(table);
+    } catch (error) {
+        console.error('Fehler beim Abrufen der Daten:', error);
+    }
+}
+
+// Führen Sie die Funktion aus, wenn das DOM geladen ist
+document.addEventListener('DOMContentLoaded', fetchDataAndCreateTable);
+</script>
+</html>
