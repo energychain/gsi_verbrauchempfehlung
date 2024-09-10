@@ -3,6 +3,9 @@ Beispiel für die Nutzung des GrünstromIndex als Empfehlung für Zeiten zur Str
 
 *Ich möchte ein einfaches Javascript erstellen, welches mir eine Empfehlung gibt, wann ich in den kommenden 24 Stunden mehr Strom verbrauchen sollte und wann weniger. Datenquelle ist der GrünstromIndex unter https://api.corrently.io/v2.0/gsi/prediction?zip=69256, wobei 69256 die Postleitzahl meines Ortes ist. Im Ergebnis des API Aufrufs gibt es einen Array von Objekten mit dem Namen "forecast", der den Wert GrünstromIndex für eine Stunde (Feld timeStamp) im Feld "gsi" enthält. Auf meiner Webseite soll die Stunde mit dem höchsten GSI Wert in den kommenden 24 Stunden ausgegeben werden als die Stunde, bei dem viel Strom aus erneuerbarer Energie stammt. Das Javascript sollte sich einfach in eine Webseite implementieren lassen.*
 
+## Beispiel
+https://energychain.github.io/gsi_verbrauchempfehlung/
+
 ## Claude.AI
 Gerne erstelle ich ein einfaches JavaScript für Sie, das die gewünschte Funktionalität bietet. Ich werde ein Script erstellen, das die Daten vom GrünstromIndex API abruft, analysiert und die Empfehlung für den Stromverbrauch ausgibt.
 
