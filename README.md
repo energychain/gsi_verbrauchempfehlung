@@ -311,6 +311,8 @@ Um die Anwendung zu verwenden, speichern Sie den Code in einer HTML-Datei und ö
       "advice": "green"
     }`. Die Ampelfarbe ist der Wert im Feld "advice" und kann "green", "yellow", "red" sein. Das erste Objekt des Array ist immer die nächste Stunde. Nutze dies auch als der aktuelle Wert. Die UI sollte mit Bootstrap als HTML mit Javascript implementiert werden. Neben der Ampel soll ein Text stehen mit "Nächste Änderung in X Stunden, dann NEUER_ADVICE", wobei dies die Zeit bis zu einem Element im Array ist, welcher einen anderen Wert in "advice" enthält. Dessen Wert  wird im Text NEUER_ADVICE angezeigt. Die UI aktualisiert sich automatisch alle 5 Minuten.*
 
+https://energychain.github.io/gsi_verbrauchempfehlung/stromampel.html
+
 ### AI Antwort
 Ich verstehe Ihre Anforderungen für eine Stromampel, die Daten von einer REST-API verwendet und eine Bootstrap-basierte UI mit automatischer Aktualisierung implementiert. Ich werde ein HTML-Dokument mit eingebettetem JavaScript erstellen, das diese Funktionalität umsetzt.
 
