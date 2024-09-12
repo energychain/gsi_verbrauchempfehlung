@@ -69,6 +69,10 @@
 
     <script>
 
+        function formatTime(date) {
+            return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        }
+
         function updateUI(data) {
             const currentAdvice = data[0].advice;
             const redLight = document.getElementById('redLight');
@@ -86,7 +90,7 @@
             if (nextChangeIndex !== -1) {
                 const nextChangeTime = new Date(data[nextChangeIndex].time);
                 const newAdvice = data[nextChangeIndex].advice;
-                nextChangeText.textContent = `bis ${nextChangeTime.getHours()}:00 Uhr, dann ${newAdvice}`;
+                nextChangeText.textContent = `bis ${formatTime(nextChangeTime)} Uhr, dann ${newAdvice}`;
             } else {
                 nextChangeText.textContent = 'Keine Änderung in den nächsten 24 Stunden vorhergesagt.';
             }
