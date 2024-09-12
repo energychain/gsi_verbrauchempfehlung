@@ -303,3 +303,119 @@ Ich habe eine HTML-Anwendung erstellt, die Ihre Anforderungen erfüllt. Hier ist
 - Die Balkenfarben werden entsprechend Ihrer Vorgaben gesetzt: grün für das niedrigste Drittel, grau für das höchste Drittel und gelb für den Rest.
 
 Um die Anwendung zu verwenden, speichern Sie den Code in einer HTML-Datei und öffnen Sie diese in einem Webbrowser. Stellen Sie sicher, dass Sie eine Internetverbindung haben und dem Browser erlauben, auf Ihren Standort zuzugreifen.
+
+## Beispiel Stromampel
+*Baue mir eine Stromampel. Als Daten wird die Ausgabe  der REST API https://api.corrently.io/v2.0/gsi/advisor?zip=69502 genutzt. Diese enthält ein Array mit Objekten wie `{
+      "time": 1726138800000,
+      "co2": 140,
+      "advice": "green"
+    }`. Die Ampelfarbe ist der Wert im Feld "advice" und kann "green", "yellow", "red" sein. Das erste Objekt des Array ist immer die nächste Stunde. Nutze dies auch als der aktuelle Wert. Die UI sollte mit Bootstrap als HTML mit Javascript implementiert werden. Neben der Ampel soll ein Text stehen mit "Nächste Änderung in X Stunden, dann NEUER_ADVICE", wobei dies die Zeit bis zu einem Element im Array ist, welcher einen anderen Wert in "advice" enthält. Dessen Wert  wird im Text NEUER_ADVICE angezeigt. Die UI aktualisiert sich automatisch alle 5 Minuten.*
+
+### AI Antwort
+Ich verstehe Ihre Anforderungen für eine Stromampel, die Daten von einer REST-API verwendet und eine Bootstrap-basierte UI mit automatischer Aktualisierung implementiert. Ich werde ein HTML-Dokument mit eingebettetem JavaScript erstellen, das diese Funktionalität umsetzt.
+
+```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stromampel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .traffic-light {
+            width: 100px;
+            height: 300px;
+            background-color: #333;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+        }
+        .light {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        .red { background-color: #dc3545; }
+        .yellow { background-color: #ffc107; }
+        .green { background-color: #28a745; }
+        .active { opacity: 1; box-shadow: 0 0 20px #fff; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Stromampel</h1>
+        <div class="row">
+            <div class="col-md-4">
+                <div id="trafficLight" class="traffic-light">
+                    <div id="redLight" class="light red"></div>
+                    <div id="yellowLight" class="light yellow"></div>
+                    <div id="greenLight" class="light green"></div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <p id="nextChange" class="fs-4"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        async function getLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation wird von Ihrem Browser nicht unterstützt');
+                } else {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                }
+            });
+        }
+
+        function fetchData(lat,lon) {
+            fetch(`https://api.corrently.io/v2.0/gsi/advisor?lat=${lat}&lon=${lon}`)
+                .then(response => response.json())
+                .then(data => updateUI(data.data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateUI(data) {
+            const currentAdvice = data[0].advice;
+            const redLight = document.getElementById('redLight');
+            const yellowLight = document.getElementById('yellowLight');
+            const greenLight = document.getElementById('greenLight');
+            const nextChangeText = document.getElementById('nextChange');
+
+            // Aktualisiere Ampelfarbe
+            redLight.classList.toggle('active', currentAdvice === 'red');
+            yellowLight.classList.toggle('active', currentAdvice === 'yellow');
+            greenLight.classList.toggle('active', currentAdvice === 'green');
+
+            // Finde nächste Änderung
+            let nextChangeIndex = data.findIndex((item, index) => index > 0 && item.advice !== currentAdvice);
+            if (nextChangeIndex !== -1) {
+                const hoursUntilChange = nextChangeIndex;
+                const newAdvice = data[nextChangeIndex].advice;
+                nextChangeText.textContent = `Nächste Änderung in ${hoursUntilChange} Stunden, dann ${newAdvice}`;
+            } else {
+                nextChangeText.textContent = 'Keine Änderung in den nächsten 24 Stunden vorhergesagt.';
+            }
+        }
+
+        // Initial fetch and update
+        const doRefresh = async function() {
+            const position = await getLocation();
+            fetchData(position.coords.latitude, position.coords.longitude);
+        }
+        doRefresh();
+
+        // Aktualisiere alle 5 Minuten
+        setInterval(doRefresh, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
+```
