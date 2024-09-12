@@ -103,7 +103,7 @@
                 const timeCell = row.insertCell(0);
                 const adviceCell = row.insertCell(1);
                 const itemTime = new Date(item.time);
-                timeCell.textContent = `${itemTime.getHours()}:00`;
+                timeCell.textContent = `${formatTime(itemTime)}`;
                 adviceCell.textContent = item.advice;
                 adviceCell.className = `table-cell-${item.advice}`;
             });
