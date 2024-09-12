@@ -146,7 +146,7 @@
                 navigator.geolocation.getCurrentPosition(
                     position => {
                         const { latitude, longitude } = position.coords;
-                        fetchData(`https://api.corrently.io/v2.0/gsi/best?lat=${latitude}&lon=${longitude}`);
+                        fetchData(`https://api.corrently.io/v2.0/gsi/advisor?lat=${latitude}&lon=${longitude}`);
                     },
                     error => {
                         console.error('Error getting location:', error);
