@@ -16,6 +16,7 @@
             justify-content: space-around;
             align-items: center;
             padding: 10px;
+            margin: 0 auto;
         }
         .light {
             width: 80px;
@@ -28,43 +29,45 @@
         .yellow { background-color: #ffc107; }
         .green { background-color: #28a745; }
         .active { opacity: 1; box-shadow: 0 0 20px #fff; }
+        .table-cell-red { background-color: #dc3545; color: white; }
+        .table-cell-yellow { background-color: #ffc107; }
+        .table-cell-green { background-color: #28a745; color: white; }
     </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">Stromampel</h1>
-        <div class="row">
+        <h1 class="mb-4 text-center">Stromampel</h1>
+        <div class="row justify-content-center">
             <div class="col-md-4">
-                <div id="trafficLight" class="traffic-light">
+                <div id="trafficLight" class="traffic-light mb-3">
                     <div id="redLight" class="light red"></div>
                     <div id="yellowLight" class="light yellow"></div>
                     <div id="greenLight" class="light green"></div>
                 </div>
+                <p id="nextChange" class="fs-4 text-center"></p>
             </div>
-            <div class="col-md-8">
-                <p id="nextChange" class="fs-4"></p>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Stundenübersicht</h2>
+                <div class="table-responsive">
+                    <table id="hourlyTable" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Uhrzeit</th>
+                                <th>Ampelfarbe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Wird durch JavaScript gefüllt -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-
-        async function getLocation() {
-            return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject('Geolocation wird von Ihrem Browser nicht unterstützt');
-                } else {
-                    navigator.geolocation.getCurrentPosition(resolve, reject);
-                }
-            });
-        }
-
-        function fetchData(lat,lon) {
-            fetch(`https://api.corrently.io/v2.0/gsi/advisor?lat=${lat}&lon=${lon}`)
-                .then(response => response.json())
-                .then(data => updateUI(data.data))
-                .catch(error => console.error('Error:', error));
-        }
 
         function updateUI(data) {
             const currentAdvice = data[0].advice;
@@ -81,23 +84,53 @@
             // Finde nächste Änderung
             let nextChangeIndex = data.findIndex((item, index) => index > 0 && item.advice !== currentAdvice);
             if (nextChangeIndex !== -1) {
-                const hoursUntilChange = nextChangeIndex;
+                const nextChangeTime = new Date(data[nextChangeIndex].time);
                 const newAdvice = data[nextChangeIndex].advice;
-                nextChangeText.textContent = `Nächste Änderung in ${hoursUntilChange} Stunden, dann ${newAdvice}`;
+                nextChangeText.textContent = `bis ${nextChangeTime.getHours()}:00 Uhr, dann ${newAdvice}`;
             } else {
                 nextChangeText.textContent = 'Keine Änderung in den nächsten 24 Stunden vorhergesagt.';
             }
+
+            // Aktualisiere Stundentabelle
+            const tableBody = document.querySelector('#hourlyTable tbody');
+            tableBody.innerHTML = ''; // Lösche vorherige Einträge
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                const timeCell = row.insertCell(0);
+                const adviceCell = row.insertCell(1);
+                const itemTime = new Date(item.time);
+                timeCell.textContent = `${itemTime.getHours()}:00`;
+                adviceCell.textContent = item.advice;
+                adviceCell.className = `table-cell-${item.advice}`;
+            });
         }
 
-        // Initial fetch and update
-        const doRefresh = async function() {
+
+    function fetchData(lat,lon) {
+        fetch(`https://api.corrently.io/v2.0/gsi/advisor?lat=${lat}&lon=${lon}`)
+            .then(response => response.json())
+            .then(data => updateUI(data.data))
+            .catch(error => console.error('Error:', error));
+    }
+    
+    async function getLocation() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject('Geolocation wird von Ihrem Browser nicht unterstützt');
+            } else {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            }
+        });
+    }
+
+    const doRefresh = async function() {
             const position = await getLocation();
             fetchData(position.coords.latitude, position.coords.longitude);
         }
-        doRefresh();
+    doRefresh();
 
-        // Aktualisiere alle 5 Minuten
-        setInterval(doRefresh, 5 * 60 * 1000);
+    // Aktualisiere alle 5 Minuten
+    setInterval(doRefresh, 5 * 60 * 1000);
     </script>
 </body>
 </html>
