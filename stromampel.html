@@ -31,26 +31,34 @@
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 id="stromampel" class="mb-4 text-center">CO<sub>2</sub>-Ampel </h1>
-        <h2 id="" class="mb-4 text-center">für Strom in <span id="city"></span></h2>
-        <div class="row justify-content-center">
-            <div class="col-md-4">
-                <div id="trafficLight" class="traffic-light mb-3">
-                    <div id="redLight" class="light red"></div>
-                    <div id="yellowLight" class="light yellow"></div>
-                    <div id="greenLight" class="light green"></div>
-                </div>
-            </div>
-        </div>
+    <div class="container">
+        <h1 id="stromampel" class="text-center">CO<sub>2</sub>-Ampel </h1>
+        <table class="table" border="0">
+            <tr id="trafficLightRow">
+                <td>
+                    <div id="trafficLight" class="traffic-light">
+                        <div id="redLight" class="light red"></div>
+                        <div id="yellowLight" class="light yellow"></div>
+                        <div id="greenLight" class="light green"></div>
+                    </div>
+                </td>
+                <td>
+                    <h2 id="" class="text-center">für Strom in <span id="city"></span></h2>
+                </td>
+            </tr>
+        </table>
 
         <div class="row mt-4 justify-content-center">
             <div class="col-md-6">
                 <button id="getLocationBtn" class="btn btn-primary mb-3">Standort ermitteln</button>
                 <button id="enterAddressBtn" class="btn btn-secondary mb-3 ms-2">Standort eingeben</button>
                 <div id="addressInputContainer" class="mb-3" style="display: none;">
-                    <input type="text" id="addressInput" class="form-control" placeholder="Adresse oder PLZ eingeben">
-                    <button id="submitAddress" class="btn btn-primary mt-2">Absenden</button>
+                    <div class="input-group">
+                        <span class="input-group-text">Postleitzahl</span>
+                        <input type="text" id="addressInput" class="form-control" placeholder="Postleitzahl eingeben" value="49080">
+                        <button id="submitAddress" class="btn btn-dark">Absenden</button>
+                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -63,8 +71,7 @@
                         <thead>
                             <tr>
                                 <th>Uhrzeit</th>
-                                <th>Ampelfarbe</th>
-                                <th>CO<sub>2</sub></th>
+                                <th>CO<sub>2</sub>/kWh</th>
                             </tr>
                         </thead>
                         <tbody id="hourlyForecast"></tbody>
@@ -77,6 +84,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const trafficLight = document.getElementById('trafficLight');
+        const trafficLightRow = document.getElementById('trafficLightRow');
+        trafficLightRow.style.display = 'none';
         const redLight = document.getElementById('redLight');
         const yellowLight = document.getElementById('yellowLight');
         const greenLight = document.getElementById('greenLight');
@@ -88,6 +97,7 @@
         const submitAddress = document.getElementById('submitAddress');
 
         function setTrafficLight(color,co2) {
+            trafficLightRow.style.display = 'block';
             redLight.title = "";
             yellowLight.title = "";
             greenLight.title = "";
@@ -108,18 +118,18 @@
 
         function updateHourlyForecast(data) {
             hourlyForecast.innerHTML = '';
+            const firstAdvice = data.data[0].advice;
+            
             data.data.forEach(hour => {
                 const row = document.createElement('tr');
                 const timeCell = document.createElement('td');
                 const colorCell = document.createElement('td');
                 const emissionCell = document.createElement('td');
-
-                const date = new Date(hour.time * 1);
-                timeCell.textContent = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                const date = new Date(hour.time * 1 - (new Date().getTimezoneOffset() * 60000));               
+                timeCell.textContent = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit',timeZone: 'Europe/Berlin'  });
                 colorCell.textContent = hour.advice == "green" ? 'Grün' : hour.advice == 'yellow' ? 'Gelb' : 'Rot';
                 emissionCell.textContent = hour.co2 + "g";
                 row.appendChild(timeCell);
-                row.appendChild(colorCell);
                 row.appendChild(emissionCell);
                 hourlyForecast.appendChild(row);
             });
@@ -149,7 +159,6 @@
                         fetchData(`https://api.corrently.io/v2.0/gsi/advisor?lat=${latitude}&lon=${longitude}`);
                     },
                     error => {
-                        console.error('Error getting location:', error);
                         showAddressInput();
                         getLocationBtn.style.display = 'none';
                         enterAddressBtn.style.display = 'none';
@@ -176,7 +185,11 @@
         });
 
         // Initially try to get the location
+        try {
         getLocation();
+        } catch(e) {
+            // Avoid errors...
+        }
     </script>
 </body>
 </html>
