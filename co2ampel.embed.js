@@ -153,11 +153,13 @@ $(document).ready(function() {
                 $('#appinit').hide();
                 $('#appbody').show();                                       
                 $('#cityName').text(`für ${data.location.city}`);
+                
                 let index = 0;
                 const now = new Date().getTime();
                 while((index<data.data.length) && (data.data[index++].time < now)) {}
                 index=index-2;                        
                 if(index<0) index=0;
+                data.data.shift();
                 updateAmpel(data.data[index].advice, data.data[index].co2, data.info);
                 updateChart(data.data);
             }
