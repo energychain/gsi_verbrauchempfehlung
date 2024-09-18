@@ -1,5 +1,8 @@
 $(document).ready(function() {
-//    Chart.register(ChartjsAdapterMoment);
+    $('#zipInputForm').submit(function(e) {
+        e.preventDefault();        
+        init($('#reqZip').val());
+    });
     moment.locale('de');
     function getLocation() {
     return new Promise((resolve, reject) => {
@@ -12,7 +15,8 @@ $(document).ready(function() {
 }
 
     function askForPostalCode() {
-        return prompt("Bitte geben Sie Ihre Postleitzahl ein:");
+      $('#appinit').show();
+      $('#appbody').hide();
     }
 
     function fetchDataGeo(lat,lon) {
@@ -37,6 +41,7 @@ $(document).ready(function() {
     }
 
     function updateChart(data) {
+        $('#initfooter').hide();
         $('#qpoll1').show();
         const ctx = $('#chart')[0].getContext('2d');
         new Chart(ctx, {
@@ -118,13 +123,13 @@ $(document).ready(function() {
             let result = "Super!";
             if(value == candytime) { $('#qpoll1').addClass('bg-success'); } else { $('#qpoll1').addClass('bg-danger'); result = "Nicht ganz!"; }
 
-            $('#qpoll1').html('<span><strong>'+result+'</strong> Mit einem Start um '+new Date(candytime).toLocaleTimeString()+' Uhr nutzt du die umweltfreundlichste Energie, die gerade im Netz ist. Ein System wie <a href="https://openems.io/" target="_blank">OpenEMS</a> macht das ganz automatisch für dich.');
+            $('#qpoll1').html('<span><strong>'+result+'</strong> Mit einem Start um '+new Date(candytime).toLocaleTimeString()+' Uhr nutzt du die umweltfreundlichste Energie, die gerade im Netz ist. Ein System wie <strong><a href="https://openems.io/" class="text-dark" target="_blank">OpenEMS</a></strong> macht das ganz automatisch für dich.');
            
         });               
     }
 
-    async function init() {
-
+    async function init(zipcode) {
+            
             let lat, lon,data;                    
             try {
                 const position = await getLocation();
@@ -133,17 +138,29 @@ $(document).ready(function() {
                 data = await fetchDataGeo(lat, lon);
             } catch (error) {
                 console.error("Geolocation error:", error);
-                const postalCode = askForPostalCode();                        
-                data = await fetchData(postalCode);
-            }                                         
-            $('#cityName').text(`für ${data.location.city}`);
-            let index = 0;
-            const now = new Date().getTime();
-            while((index<data.data.length) && (data.data[index++].time < now)) {}
-            index=index-2;                        
-            if(index<0) index=0;
-            updateAmpel(data.data[index].advice, data.data[index].co2, data.info);
-            updateChart(data.data);
+                if((typeof zipcode == 'undefined') || (zipcode == null)) {
+                    const stored = window.localStorage.getItem("zipcode");
+                    if((typeof stored !== 'undefined') && (stored !== null)) { 
+                            $('#reqZip').val(stored);
+                    }
+                    askForPostalCode();  
+                } else {
+                    window.localStorage.setItem("zipcode",zipcode);
+                    data = await fetchData(zipcode);
+                }                                         
+            }  
+            if((typeof data !== 'undefined') && (data !== null)) {
+                $('#appinit').hide();
+                $('#appbody').show();                                       
+                $('#cityName').text(`für ${data.location.city}`);
+                let index = 0;
+                const now = new Date().getTime();
+                while((index<data.data.length) && (data.data[index++].time < now)) {}
+                index=index-2;                        
+                if(index<0) index=0;
+                updateAmpel(data.data[index].advice, data.data[index].co2, data.info);
+                updateChart(data.data);
+            }
     }
     init();
 });
