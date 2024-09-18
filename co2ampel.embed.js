@@ -1,4 +1,5 @@
 $(document).ready(function() {
+//    Chart.register(ChartjsAdapterMoment);
     moment.locale('de');
     function getLocation() {
     return new Promise((resolve, reject) => {
@@ -63,13 +64,8 @@ $(document).ready(function() {
                         ticks: {
                             maxRotation: 0,
                             autoSkip: false,
-                            callback: function(value, index, values) {
-                                const date = moment(value);                                       
-                                /* 
-                                if (date.hours() === 0 || date.hours() === 6 || date.hours() === 12 || date.hours() === 18) {
-                                    return date.format('DD.MM. HH:mm');
-                                } else return 'x';
-                                */
+                            callback: function(value, index, values) {                                  
+                                const date = moment(1*data[index].time);                                       
                                 return date.format('DD.MM. HH:mm');
                             }
                         }
