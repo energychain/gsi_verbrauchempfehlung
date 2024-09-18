@@ -3,193 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stromampel</title>
+    <title>CO2 Ampel für Stomverbrauch</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/dist/chartjs-adapter-moment.min.js"></script>
     <style>
-        .traffic-light {
-            width: 200px;
+        footer {
+            margin-top:50px;
+        }
+        .header {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px 0;
+            margin-bottom: 50px;
+            background-color: #fae0c5;
+        }
+        .ampel {
+            width: 100px;
+            margin: 20px auto;
             background-color: #333;
             border-radius: 10px;
             padding: 10px;
         }
-        .light {
-            width: 160px;
-            height: 160px;
+        .ampel-light {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             margin: 10px auto;
-            opacity: 0.3;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-weight: bold;
+            font-weight: normal;
             color: #333;
         }
-        .red { background-color: red; }
-        .yellow { background-color: yellow; }
-        .green { background-color: green; }
-        .active { opacity: 1; }
+        .ampel-red { background-color: #746261; }
+        .ampel-yellow { background-color: #817c66; }
+        .ampel-green { background-color: #688577; }
+        .ampel-light.active {
+            box-shadow: 0 0 20px 5px currentColor;
+        }
+        .ampel-red.active { background-color: #a1262d; color: white; }
+        .ampel-yellow.active { background-color: #e8bf28; }
+        .ampel-green.active { background-color: #008e5e; color: white; }       
+        #chart-container {
+            height: 300px; /* Anpassen an die Höhe der Ampel */
+        }
     </style>
 </head>
 <body>
+    <header class="header">
+        <h1 class="text-center" id="headerTitle">CO<sub>2</sub> Ampel - Stromverbrauch</h1>
+        <h2 class="text-center text-muted" id="cityName">&nbsp;</h2>
+    </header>
     <div class="container">
-        <h1 id="stromampel" class="text-center">CO<sub>2</sub>-Ampel </h1>
-        <table class="table" border="0">
-            <tr id="trafficLightRow">
-                <td>
-                    <div id="trafficLight" class="traffic-light">
-                        <div id="redLight" class="light red"></div>
-                        <div id="yellowLight" class="light yellow"></div>
-                        <div id="greenLight" class="light green"></div>
-                    </div>
-                </td>
-                <td>
-                    <h2 id="" class="text-center">für Strom in <span id="city"></span></h2>
-                </td>
-            </tr>
-        </table>
-
-        <div class="row mt-4 justify-content-center">
+        <div class="row">
             <div class="col-md-6">
-                <button id="getLocationBtn" class="btn btn-primary mb-3">Standort ermitteln</button>
-                <button id="enterAddressBtn" class="btn btn-secondary mb-3 ms-2">Standort eingeben</button>
-                <div id="addressInputContainer" class="mb-3" style="display: none;">
-                    <div class="input-group">
-                        <span class="input-group-text">Postleitzahl</span>
-                        <input type="text" id="addressInput" class="form-control" placeholder="Postleitzahl eingeben" value="49080">
-                        <button id="submitAddress" class="btn btn-dark">Absenden</button>
-                    </div>
-                    
+                <div class="ampel">
+                    <div class="ampel-light ampel-red" id="ampel-red"></div>
+                    <div class="ampel-light ampel-yellow" id="ampel-yellow"></div>
+                    <div class="ampel-light ampel-green" id="ampel-green"></div>
+                </div>                
+            </div>
+            <div class="col-md-6">
+                <div id="chart-container" class="h-100">
+                    <canvas id="chart"></canvas>
                 </div>
             </div>
         </div>
-
-        <div class="row mt-4">
-            <div class="col-12">
-                <h2>Stundenübersicht</h2>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Uhrzeit</th>
-                                <th>CO<sub>2</sub>/kWh</th>
-                            </tr>
-                        </thead>
-                        <tbody id="hourlyForecast"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <hr>
+        <div class="alert alert-dark" role="alert" style="display:none" id="qpoll1"><span><strong>Frage:</strong> Du möchtest Dein Auto für 5 Stunden am Stück laden. Wann ist der Zeitpunkt hiermit zu beginnen, um CO<sub>2</sub> zu sparen?
+        <select id="bestHour" class="form-control">         
+        </select>
+        </span></div>
     </div>
+    <footer class="text-center py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <p class="text-muted my-2" data-bs-toggle="tooltip" data-bss-tooltip data-bs-placement="bottom"> Daten: <a href="https://gruenstromindex.de/" target="_blank">GrünstromIndex</p>
+                </div>
+                <div class="col align-items-lg-end">Lizenz:<a class="text-end float-none" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></div>
+            </div>
+        </div>
+        <div id="rendition"></div>
+    </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const trafficLight = document.getElementById('trafficLight');
-        const trafficLightRow = document.getElementById('trafficLightRow');
-        trafficLightRow.style.display = 'none';
-        const redLight = document.getElementById('redLight');
-        const yellowLight = document.getElementById('yellowLight');
-        const greenLight = document.getElementById('greenLight');
-        const hourlyForecast = document.getElementById('hourlyForecast');
-        const getLocationBtn = document.getElementById('getLocationBtn');
-        const enterAddressBtn = document.getElementById('enterAddressBtn');
-        const addressInputContainer = document.getElementById('addressInputContainer');
-        const addressInput = document.getElementById('addressInput');
-        const submitAddress = document.getElementById('submitAddress');
-
-        function setTrafficLight(color,co2) {
-            trafficLightRow.style.display = 'block';
-            redLight.title = "";
-            yellowLight.title = "";
-            greenLight.title = "";
-            redLight.classList.remove('active');
-            yellowLight.classList.remove('active');
-            greenLight.classList.remove('active');
-            if (color === 'red') {
-                redLight.classList.add('active');
-                redLight.title = co2 + "g/kWh";
-            } else if (color === 'yellow') {
-                yellowLight.classList.add('active');
-                yellowLight.title = co2 + "g/kWh";
-            } else if (color === 'green') {
-                greenLight.classList.add('active');
-                greenLight.title = co2 + "g/kWh";
-            }
-        }
-
-        function updateHourlyForecast(data) {
-            hourlyForecast.innerHTML = '';
-            const firstAdvice = data.data[0].advice;
-            
-            data.data.forEach(hour => {
-                const row = document.createElement('tr');
-                const timeCell = document.createElement('td');
-                const colorCell = document.createElement('td');
-                const emissionCell = document.createElement('td');
-                const date = new Date(hour.time * 1 - (new Date().getTimezoneOffset() * 60000));               
-                timeCell.textContent = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit',timeZone: 'Europe/Berlin'  });
-                colorCell.textContent = hour.advice == "green" ? 'Grün' : hour.advice == 'yellow' ? 'Gelb' : 'Rot';
-                emissionCell.textContent = hour.co2 + "g";
-                row.appendChild(timeCell);
-                row.appendChild(emissionCell);
-                hourlyForecast.appendChild(row);
+        $(document).ready(function() {
+            moment.locale('de');
+            function getLocation() {
+            return new Promise((resolve, reject) => {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                } else {
+                    reject(new Error("Geolocation is not supported by this browser."));
+                }
             });
         }
 
-        async function fetchData(url) {
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                setTrafficLight(data.data[0].advice,data.data[0].co2);
-                redLight.innerHTML = "&gt;" + data.tresholds.red.low + "g";
-                yellowLight.innerHTML =  "";
-                greenLight.innerHTML = "&lt;" + data.tresholds.green.high + "g";
-
-                updateHourlyForecast(data);
-                city.innerText = data.location.city;
-            } catch (error) {
-                console.error('Error fetching data:', error);
+            function askForPostalCode() {
+                return prompt("Bitte geben Sie Ihre Postleitzahl ein:");
             }
-        }
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        const { latitude, longitude } = position.coords;
-                        fetchData(`https://api.corrently.io/v2.0/gsi/advisor?lat=${latitude}&lon=${longitude}`);
+            function fetchDataGeo(lat,lon) {
+                return $.getJSON(`https://api.corrently.io/v2.0/gsi/advisor?lat=${lat}&lon=${lon}`);
+            }
+            function fetchData(postalCode) {
+                return $.getJSON(`https://api.corrently.io/v2.0/gsi/advisor?q=${postalCode}`);
+            }
+
+            function updateAmpel(advice, co2Value, info) {
+                $('.ampel-light').removeClass('active').text('');
+                $(`#ampel-${advice.toLowerCase()}`).addClass('active').text(co2Value +"g");                
+            }
+
+            function getColorForAdvice(advice) {
+                switch(advice.toLowerCase()) {
+                    case 'red': return '#a1262d';
+                    case 'yellow': return '#e8bf28';
+                    case 'green': return '#008e5e';
+                    default: return '#gray';
+                }
+            }
+
+            function updateChart(data) {
+                $('.alert').show();
+                const ctx = $('#chart')[0].getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => moment(d.time)),
+                        datasets: [{
+                            label: 'CO2 Wert',
+                            data: data.map(d => ({x: moment(d.time), y: d.co2})),
+                            backgroundColor: data.map(d => getColorForAdvice(d.advice))
+                        }]
                     },
-                    error => {
-                        showAddressInput();
-                        getLocationBtn.style.display = 'none';
-                        enterAddressBtn.style.display = 'none';
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'hour',
+                                    displayFormats: {
+                                        hour: 'DD.MM. HH:mm'
+                                    }
+                                },
+                                ticks: {
+                                    maxRotation: 0,
+                                    autoSkip: false,
+                                    callback: function(value, index, values) {
+                                        const date = moment(value);                                       
+                                        /* 
+                                        if (date.hours() === 0 || date.hours() === 6 || date.hours() === 12 || date.hours() === 18) {
+                                            return date.format('DD.MM. HH:mm');
+                                        } else return 'x';
+                                        */
+                                        return date.format('DD.MM. HH:mm');
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'CO2 (g/kWh)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                    display: false // Legende ausblenden
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        return moment(context[0].parsed.x).format('DD.MM.YYYY, HH:mm [Uhr]');
+                                    },
+                                    label: function(context) {
+                                        return `CO2: ${context.parsed.y} g/kWh`;
+                                    }
+                                }
+                            }
+                        }
                     }
-                );
-            } else {
-                console.error('Geolocation is not supported by this browser.');
-                showAddressInput();
+                });
+                $('#bestHour').empty();
+                let best = 999999999;
+                let candytime = data[0].time;
+                for(let i=0;i<data.length;i++) {
+                    $('#bestHour').append('<option value="'+data[i].time+'">'+moment(data[i].time).format('DD.MM., HH:mm [Uhr]')+'</option>');                    
+                    if(i+5<data.length) {
+                        let candyco2 = 0;
+                        for(let j=0;j<5;j++) {
+                            candyco2 += data[i+j].co2 * 1;
+                        }
+                        if(candyco2 < best) {
+                            best = candyco2;
+                            candytime = data[i].time;
+                        }
+                    }
+                }
+                $('#bestHour').change(function() {
+                    const value = $(this).val();
+                    $('#qpoll1').empty();
+                    $('#qpoll1').removeClass('alert-dark');
+                    let result = "Super!";
+                    if(value == candytime) { $('#qpoll1').addClass('alert-success'); } else { $('#qoll1').addClass('alert-danger'); result = "Nicht ganz!"; }
+
+                    $('#qpoll1').html('<span><strong>'+result+'</strong> Mit einem Start um '+new Date(candytime).toLocaleTimeString()+' Uhr nutzt du die umweltfreundlichste Energie, die gerade im Netz ist. Ein System wie OpenEMS macht das ganz automatisch für dich.');
+                   
+                });               
             }
-        }
 
-        function showAddressInput() {
-            addressInputContainer.style.display = 'block';
-        }
+            async function init() {
 
-        getLocationBtn.addEventListener('click', getLocation);
-        enterAddressBtn.addEventListener('click', showAddressInput);
-
-        submitAddress.addEventListener('click', () => {
-            const query = addressInput.value.trim();
-            if (query) {
-                fetchData(`https://api.corrently.io/v2.0/gsi/advisor?q=${encodeURIComponent(query)}`);
+                    let lat, lon,data;                    
+                    try {
+                        const position = await getLocation();
+                        lat = position.coords.latitude;
+                        lon = position.coords.longitude;
+                        data = await fetchDataGeo(lat, lon);
+                    } catch (error) {
+                        console.error("Geolocation error:", error);
+                        const postalCode = askForPostalCode();                        
+                        data = await fetchData(postalCode);
+                    }                                         
+                    $('#cityName').text(`für ${data.location.city}`);
+                    let index = 0;
+                    const now = new Date().getTime();
+                    while((index<data.data.length)&&(data.data[index++].time < now)) {}
+                    index=index-2;                        
+                    if(index<0) index=0;
+                    updateAmpel(data.data[index].advice, data.data[index].co2, data.info);
+                    updateChart(data.data);
             }
+            init();
         });
-
-        // Initially try to get the location
-        try {
-        getLocation();
-        } catch(e) {
-            // Avoid errors...
-        }
     </script>
 </body>
 </html>
