@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO2 Ampel für Stomverbrauch</title>
+
+</head>
+<body>
+    <style>
+        footer {
+            margin-top:50px;
+        }
+        .header {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px 0;
+            margin-bottom: 50px;
+            background-color: #fae0c5;
+        }
+        .ampel {
+            width: 100px;
+            margin: 20px auto;
+            background-color: #333;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .ampel-light {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 10px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: normal;
+            color: #333;
+        }
+        .ampel-red { background-color: #746261; }
+        .ampel-yellow { background-color: #817c66; }
+        .ampel-green { background-color: #688577; }
+        .ampel-light.active {
+            box-shadow: 0 0 20px 5px currentColor;
+        }
+        .ampel-red.active { background-color: #a1262d; color: white; }
+        .ampel-yellow.active { background-color: #e8bf28; }
+        .ampel-green.active { background-color: #008e5e; color: white; }       
+        #chart-container {
+            height: 300px; /* Anpassen an die Höhe der Ampel */
+        }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>    
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="text-center" id="headerTitle">CO<sub>2</sub> Ampel - Stromverbrauch</h1>
+                <h2 class="text-center text-muted" id="cityName">&nbsp;</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="ampel">
+                            <div class="ampel-light ampel-red" id="ampel-red"></div>
+                            <div class="ampel-light ampel-yellow" id="ampel-yellow"></div>
+                            <div class="ampel-light ampel-green" id="ampel-green"></div>
+                        </div>                
+                    </div>
+                    <div class="col-md-6">
+                        <div id="chart-container" class="h-100">
+                            <canvas id="chart"></canvas>
+                        </div>
+                    </div>
+                </div>                
+                
+            </div>
+            <div class="card-footer bg-dark text-light" style="display:none" id="qpoll1"> 
+                <div ><span><strong>Frage:</strong> Du möchtest Dein Auto für 5 Stunden am Stück laden. Wann ist der Zeitpunkt hiermit zu beginnen, um CO<sub>2</sub> zu sparen?
+                    <select id="bestHour" class="form-control">         
+                    </select>
+                    </span></div>
+            </div>
+        </div>
+    </div>
+
+            
+    <footer class="text-center py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <p class="text-muted my-2" data-bs-toggle="tooltip" data-bss-tooltip data-bs-placement="bottom"> Daten: <a href="https://gruenstromindex.de/" target="_blank">GrünstromIndex</p>
+                </div>
+                <div class="col align-items-lg-end">Lizenz:<a class="text-end float-none" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></div>
+            </div>
+        </div>
+        <div id="rendition"></div>
+    </footer>
+
+    <script src="https://energychain.github.io/gsi_verbrauchempfehlung/co2ampel.embed.js"></script>
+</body>
+</html>
