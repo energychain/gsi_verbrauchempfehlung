@@ -104,6 +104,7 @@ $(document).ready(function() {
         let best = 999999999;
         let candytime = data[0].time;
         for(let i=0;i<data.length;i++) {
+            $('#bestHour').append('<option value="0">Deine Antwort...</option>');
             $('#bestHour').append('<option value="'+data[i].time+'">'+moment(data[i].time).format('DD.MM., HH:mm [Uhr]')+'</option>');                    
             if(i+5<data.length) {
                 let candyco2 = 0;
